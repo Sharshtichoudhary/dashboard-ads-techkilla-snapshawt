@@ -1,55 +1,83 @@
-/* Dashboard.css */
-
-/* Style the main container of the dashboard */
+/* General styles for the dashboard container */
 .dashboard-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   padding: 20px;
-  background-color: #f4f4f4;
-  min-height: 100vh;
+  background-color: #f4f6f8;
 }
 
-/* Header section of the dashboard */
+/* Header styles */
 .dashboard-header {
-  font-size: 2rem;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Table container */
+.MuiTableContainer-root {
+  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+/* Table header */
+.MuiTableHead-root th {
+  font-size: 16px;
   font-weight: bold;
   color: #333;
+  background-color: #f0f0f0;
+  border-bottom: 2px solid #ddd;
+}
+
+/* Table rows */
+.MuiTableRow-root {
+  transition: background-color 0.3s ease;
+}
+
+.MuiTableRow-root:hover {
+  background-color: #f9f9f9;
+}
+
+/* Table cells */
+.MuiTableCell-root {
+  font-size: 14px;
+  padding: 12px;
+  color: #555;
+}
+
+/* Empty state cell */
+.MuiTableBody-root .MuiTableRow-root:last-child .MuiTableCell-root {
+  /* text-align: center; */
+  font-size: 1vw;
+  color: #383535;
+}
+
+/* Sorting label */
+.MuiTableSortLabel-root {
+  font-size: 16px;
+  font-weight: bold;
+  color: #555;
+  transition: color 0.2s;
+}
+
+.MuiTableSortLabel-root:hover {
+  color: #0073e6;
+}
+
+.MuiTableSortLabel-active {
+  color: #0073e6;
+}
+
+/* Dropdown menu styles */
+.MuiFormControl-root {
   margin-bottom: 20px;
 }
 
-/* Container for Create Item and Edit Item buttons */
-.dashboard-buttons {
-  display: flex;
-  justify-content: space-around;
-  width: 100%;
-  margin-top: 20px;
+.MuiSelect-select {
+  font-size: 14px;
+  padding: 10px;
 }
 
-/* Button style for Create and Edit */
-.dashboard-buttons button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.dashboard-buttons button:hover {
-  background-color: #0056b3;
-}
-
-/* Styling the form section if needed */
-.form-container {
-  width: 100%;
-  max-width: 600px;
-  margin-top: 30px;
-}
-
-.form-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 15px;
+.MuiMenuItem-root {
+  font-size: 14px;
+  padding: 10px;
 }

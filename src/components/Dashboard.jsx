@@ -9,21 +9,26 @@ import {
   TableRow,
   TableSortLabel,
   Paper,
-  Button,
   Select,
   MenuItem,
   InputLabel,
   FormControl,
+  Button,
+  Dialog,
+  TextField,
 } from "@mui/material";
 import "./Dashboard.css";
 
 const Dashboard = () => {
-  const [openCreateForm, setOpenCreateForm] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
   const [orderBy, setOrderBy] = useState("name");
   const [source, setSource] = useState("");
   const [items, setItems] = useState([]);
+  const [nameFilter, setNameFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   const availableSources = ["Google Ads", "Meta Ads", "Website", "Referral"];
 
@@ -31,10 +36,10 @@ const Dashboard = () => {
     "Google Ads": [
       {
         id: 1,
-        name: "John Doe",
+        name: "Shrishti",
         number: "12345",
         timestamp: "1627845600",
-        attendedBy: "Jane Smith",
+        attendedBy: "Shrishti",
         date: "2021-08-01",
         company: "ABC Corp",
         query: "General Query",
@@ -44,10 +49,10 @@ const Dashboard = () => {
     "Meta Ads": [
       {
         id: 2,
-        name: "Alice Johnson",
+        name: "Yashi",
         number: "67890",
         timestamp: "1627846000",
-        attendedBy: "Mark Smith",
+        attendedBy: "Yashi",
         date: "2021-08-02",
         company: "XYZ Ltd",
         query: "Product Query",
@@ -61,8 +66,6 @@ const Dashboard = () => {
   const handleSourceChange = (event) => {
     const selectedSource = event.target.value;
     setSource(selectedSource);
-
-    // Load data for the selected source
     setItems(allSourceData[selectedSource] || []);
   };
 
@@ -73,7 +76,7 @@ const Dashboard = () => {
   };
 
   const sortData = (array) => {
-    const sortedArray = array.sort((a, b) => {
+    return array.sort((a, b) => {
       const isAsc = sortDirection === "asc";
 
       if (orderBy === "timestamp") {
@@ -82,26 +85,111 @@ const Dashboard = () => {
           : parseInt(b.timestamp) - parseInt(a.timestamp);
       }
 
-      if (orderBy === "date") {
-        return isAsc
-          ? new Date(a.date) - new Date(b.date)
-          : new Date(b.date) - new Date(a.date);
-      }
-
       if (a[orderBy] < b[orderBy]) return isAsc ? -1 : 1;
       if (a[orderBy] > b[orderBy]) return isAsc ? 1 : -1;
       return 0;
     });
-    return sortedArray;
   };
 
-  const sortedItems = sortData([...items]);
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(parseInt(timestamp) * 1000);
+    return date.toLocaleString();
+  };
+
+  const sortedItems = sortData(
+    items.filter((item) => {
+      // Filter by Name
+      const matchesName = item.name
+        .toLowerCase()
+        .includes(nameFilter.toLowerCase());
+
+      // Filter by Date
+      const matchesDate = dateFilter ? item.date === dateFilter : true;
+
+      // Filter by Status
+      const matchesStatus = statusFilter ? item.status === statusFilter : true;
+
+      return matchesName && matchesDate && matchesStatus;
+    })
+  );
+
+  const handleEdit = (item) => {
+    setEditingItem(item);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete the item with ID: ${id}?`
+    );
+    if (confirmDelete) {
+      setItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    }
+  };
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setEditingItem(null);
+  };
+
+  const handleCreateFormOpen = () => {
+    setEditingItem(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleCreateFormSubmit = (newData) => {
+    if (editingItem) {
+      setItems((prevItems) =>
+        prevItems.map((item) =>
+          item.id === newData.id ? { ...item, ...newData } : item
+        )
+      );
+    } else {
+      setItems((prevItems) => [...prevItems, { ...newData, id: Date.now() }]);
+    }
+  };
 
   return (
     <div className="dashboard-container">
-      <div className="dashboard-header">Ads Leads Data </div>
+      <div className="dashboard-header">Ads Leads Data</div>
 
-      {/* Source Dropdown */}
+      <div style={{ marginBottom: "16px" }}>
+        <TextField
+          label="Filter by Date"
+          type="date"
+          variant="outlined"
+          size="small"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          style={{ marginRight: "16px", width: "200px" }}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+        <TextField
+          label="Filter by Name"
+          variant="outlined"
+          size="small"
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+          style={{ marginRight: "16px", width: "200px" }}
+        />
+
+        <FormControl variant="outlined" size="small" style={{ width: "200px" }}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            label="Status"
+          >
+            <MenuItem value="">None</MenuItem>
+            <MenuItem value="Pending">Pending</MenuItem>
+            <MenuItem value="Resolved">Resolved</MenuItem>
+            <MenuItem value="In Progress">In Progress</MenuItem>
+          </Select>
+        </FormControl>
+      </div>
+
       <FormControl
         style={{
           width: "200px",
@@ -114,10 +202,11 @@ const Dashboard = () => {
           sx={{
             fontSize: "14px",
             background: "#E5E4E2",
-            padding: "0 4px",
+            padding: "0 6px",
             borderRadius: "1vw",
             transform: "translate(14px, -6px) scale(0.9)",
             color: "black",
+            marginBottom: "8px",
           }}
           shrink={true}
         >
@@ -131,9 +220,12 @@ const Dashboard = () => {
             borderRadius: "8px",
             backgroundColor: "#f9f9f9",
             padding: "10px 14px",
+            height: "36px",
+            paddingBottom: "8px",
             "& .MuiSelect-icon": {
               color: "#333",
             },
+            marginTop: "4px",
           }}
         >
           <MenuItem value="">None</MenuItem>
@@ -145,7 +237,17 @@ const Dashboard = () => {
         </Select>
       </FormControl>
 
-      <TableContainer component={Paper}>
+      <Button
+        variant="contained"
+        color="primary"
+        size="large"
+        onClick={handleCreateFormOpen}
+        style={{ margin: "18px" }}
+      >
+        Create New Entry
+      </Button>
+
+      <TableContainer component={Paper} sx={{ marginTop: "16px" }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -158,37 +260,21 @@ const Dashboard = () => {
                   Name
                 </TableSortLabel>
               </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "number"}
-                  direction={orderBy === "number" ? sortDirection : "asc"}
-                  onClick={() => handleRequestSort("number")}
-                >
-                  Number
-                </TableSortLabel>
-              </TableCell>
+              <TableCell>Number</TableCell>
               <TableCell>
                 <TableSortLabel
                   active={orderBy === "timestamp"}
                   direction={orderBy === "timestamp" ? sortDirection : "asc"}
                   onClick={() => handleRequestSort("timestamp")}
                 >
-                  Timestamp
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>Attended By</TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "date"}
-                  direction={orderBy === "date" ? sortDirection : "asc"}
-                  onClick={() => handleRequestSort("date")}
-                >
                   Date
                 </TableSortLabel>
               </TableCell>
+              <TableCell>Attended By</TableCell>
               <TableCell>Company</TableCell>
               <TableCell>Query</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -197,12 +283,36 @@ const Dashboard = () => {
                 <TableRow hover key={item.id}>
                   <TableCell>{item.name}</TableCell>
                   <TableCell>{item.number}</TableCell>
-                  <TableCell>{item.timestamp}</TableCell>
+                  <TableCell>{formatTimestamp(item.timestamp)}</TableCell>
                   <TableCell>{item.attendedBy}</TableCell>
-                  <TableCell>{item.date}</TableCell>
                   <TableCell>{item.company}</TableCell>
                   <TableCell>{item.query}</TableCell>
                   <TableCell>{item.status}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      onClick={() => handleEdit(item)}
+                      style={{ marginRight: "8px" }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      size="small"
+                      onClick={() => handleDelete(item.id)}
+                      sx={{
+                        backgroundColor: "red",
+                        "&:hover": {
+                          backgroundColor: "#d32f2f",
+                        },
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
@@ -215,6 +325,14 @@ const Dashboard = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Dialog open={isDialogOpen} onClose={handleDialogClose}>
+        <CreateForm
+          item={editingItem}
+          onClose={handleDialogClose}
+          onSubmit={handleCreateFormSubmit}
+        />
+      </Dialog>
     </div>
   );
 };
