@@ -14,6 +14,7 @@ import {
   InputLabel,
   FormControl,
   Button,
+  Box,
   Dialog,
   TextField,
 } from "@mui/material";
@@ -22,7 +23,6 @@ import {
   addDoc,
   updateDoc,
   doc,
-  getDocs,
   deleteDoc,
   onSnapshot,
 } from "firebase/firestore";
@@ -43,6 +43,7 @@ const Dashboard = () => {
   const [selectedSourcedData, setSelectedSourcedData] = useState([]);
 
   const availableSources = ["Google Ads", "Meta Ads", "Website", "Referral"];
+  const availableStatuses = ["Pending", "Approved", "In Progress"];
   console.log("Items", items);
 
   // get all data
@@ -62,68 +63,88 @@ const Dashboard = () => {
 
   console.log("Items", items);
 
-  // handle source change
   const handleSourceChange = async (event) => {
-    console.log("calling handle sourse change");
     const selectedSource = event.target.value;
     setSource(selectedSource);
+
+    // If source is not selected, reset filters
+
+    setNameFilter("");
+    setStatusFilter("");
   };
 
-  // filter souce change
+  // handle name change
+  const handleNameChange = (event) => {
+    const selectedName = event.target.value;
+    setNameFilter(selectedName);
+  };
+
+  // handle status change
+  const handleStatusChange = (event) => {
+    const selectedStatus = event.target.value;
+    setStatusFilter(selectedStatus);
+  };
+  const handleDateChange = (event) => {
+    setDateFilter(event.target.value);
+  };
+
+  // Format ISO date to YYYY-MM-DD for comparison
+  const formatDateForComparison = (isoDate) => {
+    const date = new Date(isoDate);
+    return date.toISOString().split("T")[0]; // Get only the YYYY-MM-DD part
+  };
+
+  // Filter items based on source, name, status, and date
   useEffect(() => {
-    const handleFilterSourceChange = () => {
-      const filteredItems = items.filter((item) => item.source === source);
+    const handleFilterChange = () => {
+      let filteredItems = items;
+
+      // If source is selected, filter by source
+      if (source) {
+        filteredItems = filteredItems.filter((item) => item.source === source);
+      }
+
+      // If status is selected, filter by status
+      if (statusFilter) {
+        filteredItems = filteredItems.filter(
+          (item) =>
+            item.status &&
+            item.status.toLowerCase().trim() ===
+              statusFilter.toLowerCase().trim()
+        );
+      }
+
+      // If name is selected, filter by name
+      if (nameFilter) {
+        filteredItems = filteredItems.filter((item) =>
+          item.name?.toLowerCase().includes(nameFilter.toLowerCase())
+        );
+      }
+
+      // If date is selected, filter by date
+      if (dateFilter) {
+        filteredItems = filteredItems.filter(
+          (item) => formatDateForComparison(item.date) === dateFilter
+        );
+      }
+
+      // Set filtered data
       setSelectedSourcedData(filteredItems);
     };
 
-    handleFilterSourceChange();
-  }, [source, items]);
-
-  console.log("selectedSourcedData", selectedSourcedData);
+    // Apply filtering if any filter is set
+    if (source || statusFilter || nameFilter || dateFilter) {
+      handleFilterChange();
+    } else {
+      setSelectedSourcedData(); // Show all data if no filters are selected
+    }
+  }, [source, nameFilter, statusFilter, dateFilter, items]);
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && sortDirection === "asc";
     setSortDirection(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
-
-  const sortData = (array) => {
-    return array.sort((a, b) => {
-      const isAsc = sortDirection === "asc";
-
-      if (orderBy === "timestamp") {
-        return isAsc
-          ? parseInt(a.timestamp) - parseInt(b.timestamp)
-          : parseInt(b.timestamp) - parseInt(a.timestamp);
-      }
-
-      if (a[orderBy] < b[orderBy]) return isAsc ? -1 : 1;
-      if (a[orderBy] > b[orderBy]) return isAsc ? 1 : -1;
-      return 0;
-    });
-  };
-
-  const formatTimestamp = (timestamp) => {
-    const date = new Date(parseInt(timestamp) * 1000);
-    return date.toLocaleString();
-  };
-
-  const sortedItems = sortData(
-    items.filter((item) => {
-      // Filter by Name
-      const matchesName = item.name
-        .toLowerCase()
-        .includes(nameFilter.toLowerCase());
-
-      // Filter by Date
-      const matchesDate = dateFilter ? item.date === dateFilter : true;
-
-      // Filter by Status
-      const matchesStatus = statusFilter ? item.status === statusFilter : true;
-
-      return matchesName && matchesDate && matchesStatus;
-    })
-  );
 
   // open edit form
   const handleEdit = (item) => {
@@ -203,44 +224,62 @@ const Dashboard = () => {
       });
     }
   };
+  const formatTimestamp = (timestamp) => {
+    // Check if timestamp is an instance of Firebase Timestamp
+    if (timestamp && timestamp.toDate) {
+      const date = timestamp.toDate(); // Convert Firebase timestamp to JS Date
+      return date.toISOString().split("T")[0]; // Return only the YYYY-MM-DD part
+    }
+
+    // If it's already a JS Date, use it directly
+    if (timestamp instanceof Date) {
+      return timestamp.toISOString().split("T")[0]; // Return formatted date
+    }
+
+    // If timestamp is invalid, return current date
+    return new Date().toISOString().split("T")[0]; // Return today's date as fallback
+  };
 
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">Ads Leads Data</div>
 
       <div style={{ marginBottom: "16px" }}>
-        <TextField
-          label="Filter by Date"
+        {/* <TextField
+          label="Date"
           type="date"
           variant="outlined"
           size="small"
           value={dateFilter}
-          onChange={(e) => setDateFilter(e.target.value)}
-          style={{ marginRight: "16px", width: "200px" }}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
+          onChange={handleDateChange}
+          InputLabelProps={{ shrink: true }}
+          style={{ marginRight: 10 }}
+        /> */}
+
         <TextField
           label="Filter by Name"
           variant="outlined"
           size="small"
           value={nameFilter}
-          onChange={(e) => setNameFilter(e.target.value)}
+          onChange={handleNameChange}
           style={{ marginRight: "16px", width: "200px" }}
+          disabled={!source}
         />
 
         <FormControl variant="outlined" size="small" style={{ width: "200px" }}>
           <InputLabel>Status</InputLabel>
           <Select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={handleStatusChange}
             label="Status"
+            disabled={!source}
           >
             <MenuItem value="">None</MenuItem>
-            <MenuItem value="Pending">Pending</MenuItem>
-            <MenuItem value="Resolved">Resolved</MenuItem>
-            <MenuItem value="In Progress">In Progress</MenuItem>
+            {availableStatuses.map((status) => (
+              <MenuItem key={status} value={status}>
+                {status}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
       </div>
@@ -333,7 +372,7 @@ const Dashboard = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {selectedSourcedData.length > 0 ? (
+            {selectedSourcedData?.length > 0 ? (
               selectedSourcedData.map((item) => (
                 <TableRow hover key={item.id}>
                   <TableCell>{item.name}</TableCell>
@@ -344,29 +383,36 @@ const Dashboard = () => {
                   <TableCell>{item.query}</TableCell>
                   <TableCell>{item.status}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      onClick={() => handleEdit(item)}
-                    >
-                      Edit
-                    </Button>
-
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      size="small"
-                      onClick={() => handleDelete(item.id)}
+                    <Box
                       sx={{
-                        backgroundColor: "red",
-                        "&:hover": {
-                          backgroundColor: "#d32f2f",
-                        },
+                        display: "flex",
+                        gap: "1vw", // Adjust the gap as needed
                       }}
                     >
-                      Delete
-                    </Button>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        onClick={() => handleEdit(item)}
+                      >
+                        Edit
+                      </Button>
+
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        size="small"
+                        onClick={() => handleDelete(item.id)}
+                        sx={{
+                          backgroundColor: "red",
+                          "&:hover": {
+                            backgroundColor: "#d32f2f",
+                          },
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))

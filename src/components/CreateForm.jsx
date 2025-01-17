@@ -26,7 +26,7 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
     if (item) {
       setFormData({
         ...item,
-        timestamp: item.timestamp || new Date().toISOString(), // Format timestamp
+        timestamp: item.timestamp || new Date().toISOString(),
       });
     } else {
       // If creating a new entry, set current timestamp
@@ -39,9 +39,30 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevState) => ({ ...prevState, [name]: value }));
-  };
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
 
+    // Validate number field
+    if (name === "number" || name === "date") {
+      if (!/^\d+$/.test(value)) {
+        setErrors({
+          ...errors,
+          [name]: "This field requires a valid number.",
+        });
+      } else {
+        setErrors({
+          ...errors,
+          [name]: "",
+        });
+      }
+    }
+  };
+  const [errors, setErrors] = useState({
+    number: "",
+    date: "",
+  });
   // Handle form submission
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -54,7 +75,7 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
   return (
     <form onSubmit={handleSubmit}>
       <Dialog open onClose={onClose}>
-        <DialogTitle>{item ? "Edit Data" : "Create Lead"}</DialogTitle>
+        <DialogTitle>{formData.name ? "Edit Data" : "Create Lead"}</DialogTitle>
         <DialogContent>
           <TextField
             label="Name"
@@ -71,8 +92,10 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
             onChange={handleChange}
             fullWidth
             margin="normal"
+            error={!!errors.number}
+            helperText={errors.number}
+            inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
           />
-
           <TextField
             label="Attended By"
             name="attendedBy"
@@ -81,14 +104,17 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
             fullWidth
             margin="normal"
           />
-          <TextField
+          {/* <TextField
             label="Date"
             name="date"
             value={formData.date}
             onChange={handleChange}
             fullWidth
             margin="normal"
-          />
+            error={!!errors.date}
+            helperText={errors.date}
+            inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+          /> */}
           <TextField
             label="Company"
             name="company"
@@ -118,7 +144,12 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
           <Button onClick={onClose} color="secondary">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} color="primary" variant="contained">
+          <Button
+            onClick={handleSubmit}
+            color="primary"
+            variant="contained"
+            disabled={!!errors.number || !!errors.date}
+          >
             Save
           </Button>
         </DialogActions>
