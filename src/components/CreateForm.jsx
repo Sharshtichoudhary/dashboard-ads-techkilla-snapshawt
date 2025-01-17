@@ -42,8 +42,9 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
     setFormData((prevState) => ({ ...prevState, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // Handle form submission
+  const handleSubmit = (event) => {
+    event.preventDefault();
     if (onSubmit) {
       onSubmit(formData);
     }

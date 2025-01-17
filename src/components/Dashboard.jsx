@@ -27,7 +27,6 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
-import { query, where } from "firebase/firestore";
 
 import "./Dashboard.css";
 
@@ -41,26 +40,12 @@ const Dashboard = () => {
   const [nameFilter, setNameFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [selectedSourcedData, setSelectedSourcedData] = useState([]);
 
   const availableSources = ["Google Ads", "Meta Ads", "Website", "Referral"];
   console.log("Items", items);
-  // const fetchSourceData = async (selectedSource) => {
-  //   try {
-  //     const leadsQuery = query(
-  //       collection(db, "techkilla_leads"),
-  //       where("source", "==", selectedSource)
-  //     );
-  //     const querySnapshot = await getDocs(leadsQuery);
-  //     const leadsData = querySnapshot.docs.map((doc) => ({
-  //       id: doc.id,
-  //       ...doc.data(),
-  //     }));
-  //     console.log("leadsData", leadsData);
-  //     setItems(leadsData);
-  //   } catch (error) {
-  //     console.error("Error fetching leads data:", error.message);
-  //   }
-  // };
+
+  // get all data
   useEffect(() => {
     const unsubscribe = onSnapshot(
       collection(db, "techkilla_leads"),
@@ -69,40 +54,32 @@ const Dashboard = () => {
           ...doc.data(),
           id: doc.id,
         }));
-        // setItems(alldata);
-        console.log(alldata);
         setItems(alldata);
       }
     );
     return () => unsubscribe();
   }, []);
-  // useEffect(() => {
-  //   if (source) {
-  //     fetchSourceData(source);
-  //   }
-  // }, [source]);
 
+  console.log("Items", items);
+
+  // handle source change
   const handleSourceChange = async (event) => {
+    console.log("calling handle sourse change");
     const selectedSource = event.target.value;
     setSource(selectedSource);
-
-    try {
-      const q = query(
-        collection(db, "techkilla_leads"),
-        where("source", "==", selectedSource)
-      );
-      const querySnapshot = await getDocs(q);
-
-      const fetchedItems = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      setItems(fetchedItems);
-    } catch (error) {
-      console.error("Error fetching data:", error.message);
-    }
   };
+
+  // filter souce change
+  useEffect(() => {
+    const handleFilterSourceChange = () => {
+      const filteredItems = items.filter((item) => item.source === source);
+      setSelectedSourcedData(filteredItems);
+    };
+
+    handleFilterSourceChange();
+  }, [source, items]);
+
+  console.log("selectedSourcedData", selectedSourcedData);
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && sortDirection === "asc";
@@ -148,31 +125,29 @@ const Dashboard = () => {
     })
   );
 
+  // open edit form
   const handleEdit = (item) => {
-    console.log("Editing item:", item);
     setEditingItem(item);
     setIsDialogOpen(true);
   };
-  async function deleteDocument(docId) {
-    try {
-      const docRef = doc(db, "techkilla_leads", docId);
-      await deleteDoc(docRef);
-      console.log(`Document with ID: ${docId} has been deleted.`);
-    } catch (error) {
-      console.error("Error deleting document: ", error);
-    }
-  }
+
+  // handle delete
   const handleDelete = (id) => {
     const confirmDelete = window.confirm(
       `Are you sure you want to delete the item with ID: ${id}?`
     );
-    if (confirmDelete) {
-      // Call deleteDocument to delete the item from Firestore
-      deleteDocument(id).then(() => {
-        // After deletion, remove the item from the local state
-        setItems((prevItems) => prevItems.filter((item) => item.id !== id));
-      });
-    }
+
+    const confirmAndDelete = async () => {
+      try {
+        const docRef = doc(db, "techkilla_leads", id);
+        await deleteDoc(docRef);
+        console.log(`Document with ID: ${docRef.id} has been deleted.`);
+      } catch (error) {
+        console.error("Error deleting document: ", error);
+      }
+    };
+
+    confirmDelete && confirmAndDelete();
   };
 
   const handleDialogClose = () => {
@@ -180,52 +155,41 @@ const Dashboard = () => {
     setEditingItem(null);
   };
 
+  // open create form
   const handleCreateFormOpen = () => {
     setEditingItem(null);
     setIsDialogOpen(true);
   };
+
+  // firestore create lead
   const createLead = async (formData) => {
+    console.log(formData);
     try {
-      // Add the document to Firestore and get its reference
       const docRef = await addDoc(collection(db, "techkilla_leads"), formData);
       console.log("Document written with ID: ", docRef.id);
 
       // Update the document to include the ID in the document fields
       await updateDoc(docRef, { id: docRef.id });
       console.log("Document updated to include ID: ", docRef.id);
-
-      return docRef.id;
     } catch (error) {
       console.error("Error adding document: ", error.message);
       throw error;
     }
   };
 
+  // create and update lead
   const handleCreateFormSubmit = async (newData) => {
     try {
       const dataWithSource = { ...newData, source };
 
-      if (editingItem && editingItem.id) {
-        // Ensure that we have an editingItem with a valid id to update
-        const itemDoc = doc(db, "techkilla_leads", editingItem.id);
+      if (editingItem) {
+        // update lead
+        const itemDoc = doc(db, "techkilla_leads", dataWithSource.id);
         await updateDoc(itemDoc, dataWithSource);
-        console.log("Document updated with ID:", editingItem.id);
-
-        // Update the local state with the edited data
-        setItems((prevItems) =>
-          prevItems.map((item) =>
-            item.id === editingItem.id ? { ...item, ...dataWithSource } : item
-          )
-        );
+        setEditingItem(null);
       } else {
-        // If there's no editingItem or no ID, create a new document
-        const newDocId = await createLead(dataWithSource);
-        console.log("New lead added with ID:", newDocId);
-
-        setItems((prevItems) => [
-          ...prevItems,
-          { id: newDocId, ...dataWithSource },
-        ]);
+        // create new lead
+        await createLead(dataWithSource);
       }
 
       // Close the dialog and reset editing state
@@ -369,8 +333,8 @@ const Dashboard = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {sortedItems.length > 0 ? (
-              sortedItems.map((item) => (
+            {selectedSourcedData.length > 0 ? (
+              selectedSourcedData.map((item) => (
                 <TableRow hover key={item.id}>
                   <TableCell>{item.name}</TableCell>
                   <TableCell>{item.number}</TableCell>
@@ -384,10 +348,7 @@ const Dashboard = () => {
                       variant="contained"
                       color="primary"
                       size="small"
-                      onClick={() => {
-                        console.log("Item passed to handleEdit:", item);
-                        handleEdit(item);
-                      }}
+                      onClick={() => handleEdit(item)}
                     >
                       Edit
                     </Button>
