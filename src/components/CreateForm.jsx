@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+
 import {
   TextField,
   Button,
@@ -23,7 +24,16 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
 
   useEffect(() => {
     if (item) {
-      setFormData(item);
+      setFormData({
+        ...item,
+        timestamp: item.timestamp || new Date().toISOString(), // Format timestamp
+      });
+    } else {
+      // If creating a new entry, set current timestamp
+      setFormData((prevState) => ({
+        ...prevState,
+        timestamp: new Date().toISOString(),
+      }));
     }
   }, [item]);
 
@@ -35,9 +45,9 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (onSubmit) {
-      onSubmit(formData); // Correctly use onSubmit prop
+      onSubmit(formData);
     }
-    onClose(); // Close the dialog after submission
+    onClose();
   };
 
   return (
@@ -61,14 +71,7 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
             fullWidth
             margin="normal"
           />
-          <TextField
-            label="Timestamp"
-            name="timestamp"
-            value={formData.timestamp}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-          />
+
           <TextField
             label="Attended By"
             name="attendedBy"
