@@ -45,7 +45,18 @@ const Dashboard = ({ isLoggedIn }) => {
   const navigate = useNavigate();
 
   const availableSources = ["Google Ads", "Meta Ads", "Website", "Referral"];
-  const availableStatuses = ["Pending", "Approved", "In Progress"];
+
+  const availableStatuses = [
+    ...new Set(
+      items
+        .map((item) =>
+          item.status ? item.status.toLowerCase().replace(/[.,!?:;]$/, "") : ""
+        )
+        .filter(Boolean)
+        .map((status) => status.charAt(0).toUpperCase() + status.slice(1)) // Capitalize the first letter of each status
+    ),
+  ];
+
   // console.log("Items", items);
 
   useEffect(() => {
@@ -93,13 +104,6 @@ const Dashboard = ({ isLoggedIn }) => {
     setStatusFilter(selectedStatus);
   };
 
-  // Format ISO date to YYYY-MM-DD for comparison
-  const formatDateForComparison = (isoDate) => {
-    const date = new Date(isoDate);
-    return date.toISOString().split("T")[0]; // Get only the YYYY-MM-DD part
-  };
-
-  // Filter items based on source, name, status, and date
   useEffect(() => {
     const handleFilterChange = () => {
       let filteredItems = items;
@@ -357,6 +361,7 @@ const Dashboard = ({ isLoggedIn }) => {
         size="large"
         onClick={handleCreateFormOpen}
         style={{ margin: "18px" }}
+        disabled={!source}
       >
         Create New Entry
       </Button>

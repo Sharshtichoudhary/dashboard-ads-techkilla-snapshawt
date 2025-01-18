@@ -19,6 +19,7 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
     query: "",
     status: "",
   });
+  const specialCharRegex = /[^a-zA-Z0\s]/;
 
   useEffect(() => {
     if (item) {
@@ -37,6 +38,14 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === "status") {
+      const specialCharRegex = /[^a-zA-Z\s]/;
+
+      if (specialCharRegex.test(value)) {
+        alert("Please don't use digits or special characters.");
+        return;
+      }
+    }
     setFormData({
       ...formData,
       [name]: value,
@@ -119,19 +128,14 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
             fullWidth
             margin="normal"
           />
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Status</InputLabel>
-            <Select
-              label="Status"
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-            >
-              <MenuItem value="approved">Approved</MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="rejected">Rejected</MenuItem>
-            </Select>
-          </FormControl>
+          <TextField
+            label="Status"
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="secondary">
