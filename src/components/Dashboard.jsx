@@ -228,7 +228,7 @@ const Dashboard = ({ isLoggedIn }) => {
 
   // firestore create lead
   const createLead = async (formData) => {
-    console.log(formData);
+    // console.log(formData);
     try {
       const docRef = await addDoc(collection(db, "techkilla_leads"), formData);
       console.log("Document written with ID: ", docRef.id);
