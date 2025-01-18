@@ -80,8 +80,8 @@
   font-size: 14px;
   padding: 10px;
 }
-@media (max-width: 480px) {
+@media all and (max-width: 480px) {
   .dashboard-container {
-    border: 2vw solid black;
+    border: 12vw solid black !important;
   }
 }

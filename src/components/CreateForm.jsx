@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-
+import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import {
   TextField,
   Button,
@@ -11,12 +11,10 @@ import {
 
 const CreateForm = ({ item, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
-    id: "",
     name: "",
     number: "",
     timestamp: "",
     attendedBy: "",
-    date: "",
     company: "",
     query: "",
     status: "",
@@ -104,17 +102,7 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
             fullWidth
             margin="normal"
           />
-          {/* <TextField
-            label="Date"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-            error={!!errors.date}
-            helperText={errors.date}
-            inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
-          /> */}
+
           <TextField
             label="Company"
             name="company"
@@ -131,14 +119,19 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
             fullWidth
             margin="normal"
           />
-          <TextField
-            label="Status"
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Status</InputLabel>
+            <Select
+              label="Status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+            >
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="rejected">Rejected</MenuItem>
+            </Select>
+          </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="secondary">

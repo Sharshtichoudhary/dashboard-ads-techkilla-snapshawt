@@ -9,7 +9,7 @@ import {
   DialogActions,
 } from "@mui/material";
 
-const LoginPopup = () => {
+const LoginPopup = ({ setIsLoggedIn }) => {
   const [passcode, setPasscode] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -18,6 +18,7 @@ const LoginPopup = () => {
 
   const handleSubmit = () => {
     if (passcode === predefinedPasscode) {
+      setIsLoggedIn(true);
       navigate("/dashboard");
     } else {
       setError("Incorrect passcode. Please try again.");

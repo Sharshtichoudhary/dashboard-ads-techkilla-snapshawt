@@ -6,6 +6,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  Typography,
   TableRow,
   TableSortLabel,
   Paper,
@@ -27,25 +28,31 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
-
+import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
-const Dashboard = () => {
+const Dashboard = ({ isLoggedIn }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [sortDirection, setSortDirection] = useState("asc");
-  const [orderBy, setOrderBy] = useState("name");
+  const [sortDirection, setSortDirection] = useState("");
+  const [orderBy, setOrderBy] = useState("date");
   const [source, setSource] = useState("");
   const [items, setItems] = useState([]);
   const [nameFilter, setNameFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedSourcedData, setSelectedSourcedData] = useState([]);
+  const navigate = useNavigate();
 
   const availableSources = ["Google Ads", "Meta Ads", "Website", "Referral"];
   const availableStatuses = ["Pending", "Approved", "In Progress"];
   console.log("Items", items);
 
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate("/");
+    }
+  }, []);
   // get all data
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -71,6 +78,7 @@ const Dashboard = () => {
 
     setNameFilter("");
     setStatusFilter("");
+    setDateFilter("");
   };
 
   // handle name change
@@ -83,9 +91,6 @@ const Dashboard = () => {
   const handleStatusChange = (event) => {
     const selectedStatus = event.target.value;
     setStatusFilter(selectedStatus);
-  };
-  const handleDateChange = (event) => {
-    setDateFilter(event.target.value);
   };
 
   // Format ISO date to YYYY-MM-DD for comparison
@@ -123,8 +128,19 @@ const Dashboard = () => {
 
       // If date is selected, filter by date
       if (dateFilter) {
-        filteredItems = filteredItems.filter(
-          (item) => formatDateForComparison(item.date) === dateFilter
+        // console.log(dateFilter, filteredItems);
+        filteredItems = filteredItems.filter((item) => {
+          const date = new Date(item.timestamp).toISOString().split("T")[0];
+          return date === dateFilter;
+        });
+      }
+      if (sortDirection === "asc") {
+        filteredItems = filteredItems.sort(
+          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+        );
+      } else {
+        filteredItems = filteredItems.sort(
+          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
         );
       }
 
@@ -133,19 +149,18 @@ const Dashboard = () => {
     };
 
     // Apply filtering if any filter is set
-    if (source || statusFilter || nameFilter || dateFilter) {
+    if (source || statusFilter || nameFilter || dateFilter || sortDirection) {
       handleFilterChange();
     } else {
       setSelectedSourcedData(); // Show all data if no filters are selected
     }
-  }, [source, nameFilter, statusFilter, dateFilter, items]);
+  }, [source, nameFilter, statusFilter, dateFilter, items, sortDirection]);
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && sortDirection === "asc";
     setSortDirection(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
-
   // open edit form
   const handleEdit = (item) => {
     setEditingItem(item);
@@ -226,18 +241,11 @@ const Dashboard = () => {
   };
   const formatTimestamp = (timestamp) => {
     // Check if timestamp is an instance of Firebase Timestamp
-    if (timestamp && timestamp.toDate) {
-      const date = timestamp.toDate(); // Convert Firebase timestamp to JS Date
-      return date.toISOString().split("T")[0]; // Return only the YYYY-MM-DD part
-    }
+    console.log("date", timestamp);
+    const date = new Date(timestamp).toISOString().split("T")[0];
 
-    // If it's already a JS Date, use it directly
-    if (timestamp instanceof Date) {
-      return timestamp.toISOString().split("T")[0]; // Return formatted date
-    }
-
-    // If timestamp is invalid, return current date
-    return new Date().toISOString().split("T")[0]; // Return today's date as fallback
+    console.log(date);
+    return date;
   };
 
   return (
@@ -245,17 +253,17 @@ const Dashboard = () => {
       <div className="dashboard-header">Ads Leads Data</div>
 
       <div style={{ marginBottom: "16px" }}>
-        {/* <TextField
+        <TextField
           label="Date"
           type="date"
           variant="outlined"
           size="small"
           value={dateFilter}
-          onChange={handleDateChange}
+          onChange={(e) => setDateFilter(e.target.value)}
           InputLabelProps={{ shrink: true }}
           style={{ marginRight: 10 }}
-        /> */}
-
+          disabled={!source}
+        />
         <TextField
           label="Filter by Name"
           variant="outlined"
@@ -345,21 +353,13 @@ const Dashboard = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "name"}
-                  direction={orderBy === "name" ? sortDirection : "asc"}
-                  onClick={() => handleRequestSort("name")}
-                >
-                  Name
-                </TableSortLabel>
-              </TableCell>
+              <TableCell>Name</TableCell>
               <TableCell>Number</TableCell>
               <TableCell>
                 <TableSortLabel
-                  active={orderBy === "timestamp"}
-                  direction={orderBy === "timestamp" ? sortDirection : "asc"}
-                  onClick={() => handleRequestSort("timestamp")}
+                  active={orderBy === "date"}
+                  direction={orderBy === "date" ? sortDirection : "asc"}
+                  onClick={() => handleRequestSort("date")}
                 >
                   Date
                 </TableSortLabel>
