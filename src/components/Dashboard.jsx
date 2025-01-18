@@ -46,7 +46,7 @@ const Dashboard = ({ isLoggedIn }) => {
 
   const availableSources = ["Google Ads", "Meta Ads", "Website", "Referral"];
   const availableStatuses = ["Pending", "Approved", "In Progress"];
-  console.log("Items", items);
+  // console.log("Items", items);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -68,7 +68,7 @@ const Dashboard = ({ isLoggedIn }) => {
     return () => unsubscribe();
   }, []);
 
-  console.log("Items", items);
+  // console.log("Items", items);
 
   const handleSourceChange = async (event) => {
     const selectedSource = event.target.value;
@@ -170,7 +170,7 @@ const Dashboard = ({ isLoggedIn }) => {
   // handle delete
   const handleDelete = (id) => {
     const confirmDelete = window.confirm(
-      `Are you sure you want to delete the item with ID: ${id}?`
+      `Are you sure you want to delete the item ?`
     );
 
     const confirmAndDelete = async () => {
@@ -199,7 +199,7 @@ const Dashboard = ({ isLoggedIn }) => {
 
   // firestore create lead
   const createLead = async (formData) => {
-    console.log(formData);
+    // console.log(formData);
     try {
       const docRef = await addDoc(collection(db, "techkilla_leads"), formData);
       console.log("Document written with ID: ", docRef.id);
@@ -241,13 +241,17 @@ const Dashboard = ({ isLoggedIn }) => {
   };
   const formatTimestamp = (timestamp) => {
     // Check if timestamp is an instance of Firebase Timestamp
-    console.log("date", timestamp);
+    // console.log("date", timestamp);
     const date = new Date(timestamp).toISOString().split("T")[0];
 
-    console.log(date);
+    // console.log(date);
     return date;
   };
-
+  const handleClearFilters = () => {
+    setDateFilter("");
+    setNameFilter("");
+    setStatusFilter("");
+  };
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">Ads Leads Data</div>
@@ -290,6 +294,14 @@ const Dashboard = ({ isLoggedIn }) => {
             ))}
           </Select>
         </FormControl>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={handleClearFilters}
+          style={{ marginLeft: "16px", height: "40px" }}
+        >
+          Clear Filters
+        </Button>
       </div>
 
       <FormControl
