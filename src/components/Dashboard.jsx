@@ -41,6 +41,8 @@ const Dashboard = ({ isLoggedIn }) => {
   const [nameFilter, setNameFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [timestampFilter, setTimestampFilter] = useState("");
+
   const [selectedSourcedData, setSelectedSourcedData] = useState([]);
   const navigate = useNavigate();
 
@@ -133,18 +135,28 @@ const Dashboard = ({ isLoggedIn }) => {
       // If date is selected, filter by date
       if (dateFilter) {
         // console.log(dateFilter, filteredItems);
-        filteredItems = filteredItems.filter((item) => {
-          const date = new Date(item.timestamp).toISOString().split("T")[0];
-          return date === dateFilter;
-        });
+        // filteredItems = filteredItems.filter((item) => {
+        //   const date = new Date(item.timestamp).toISOString().split("T")[0];
+        //   return date === dateFilter;
+        // });
+        filteredItems = filteredItems.filter(
+          (item) => item.date === dateFilter
+        );
       }
+
+      if (timestampFilter) {
+        filteredItems = filteredItems.filter(
+          (item) => item.timestamp === timestampFilter
+        );
+      }
+
       if (sortDirection === "asc") {
         filteredItems = filteredItems.sort(
-          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+          (a, b) => new Date(a.date) - new Date(b.date)
         );
       } else {
         filteredItems = filteredItems.sort(
-          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+          (a, b) => new Date(b.date) - new Date(a.date)
         );
       }
 
@@ -153,13 +165,26 @@ const Dashboard = ({ isLoggedIn }) => {
     };
 
     // Apply filtering if any filter is set
-    if (source || statusFilter || nameFilter || dateFilter || sortDirection) {
+    if (
+      source ||
+      statusFilter ||
+      nameFilter ||
+      dateFilter ||
+      sortDirection ||
+      timestampFilter
+    ) {
       handleFilterChange();
     } else {
       setSelectedSourcedData(); // Show all data if no filters are selected
     }
   }, [source, nameFilter, statusFilter, dateFilter, items, sortDirection]);
-
+  const availableTimestamps = [
+    ...new Set(
+      items
+        .filter((item) => item.date === dateFilter)
+        .map((item) => item.timestamp)
+    ),
+  ];
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && sortDirection === "asc";
     setSortDirection(isAsc ? "desc" : "asc");
@@ -203,7 +228,7 @@ const Dashboard = ({ isLoggedIn }) => {
 
   // firestore create lead
   const createLead = async (formData) => {
-    // console.log(formData);
+    console.log(formData);
     try {
       const docRef = await addDoc(collection(db, "techkilla_leads"), formData);
       console.log("Document written with ID: ", docRef.id);
@@ -272,6 +297,27 @@ const Dashboard = ({ isLoggedIn }) => {
           style={{ marginRight: 10 }}
           disabled={!source}
         />
+        {dateFilter && (
+          <FormControl
+            variant="outlined"
+            size="small"
+            style={{ width: "200px", marginLeft: "10px", marginRight: "10px" }}
+          >
+            <InputLabel>Timestamp</InputLabel>
+            <Select
+              value={timestampFilter}
+              onChange={(e) => setTimestampFilter(e.target.value)}
+              label="Timestamp"
+            >
+              <MenuItem value="">None</MenuItem>
+              {availableTimestamps.map((timestamp) => (
+                <MenuItem key={timestamp} value={timestamp}>
+                  {new Date(timestamp).toLocaleTimeString()}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
         <TextField
           label="Filter by Name"
           variant="outlined"
@@ -381,6 +427,7 @@ const Dashboard = ({ isLoggedIn }) => {
                   Date
                 </TableSortLabel>
               </TableCell>
+              <TableCell>Time</TableCell>
               <TableCell>Attended By</TableCell>
               <TableCell>Company</TableCell>
               <TableCell>Query</TableCell>
@@ -394,7 +441,8 @@ const Dashboard = ({ isLoggedIn }) => {
                 <TableRow hover key={item.id}>
                   <TableCell>{item.name}</TableCell>
                   <TableCell>{item.number}</TableCell>
-                  <TableCell>{formatTimestamp(item.timestamp)}</TableCell>
+                  <TableCell>{item.date}</TableCell>
+                  <TableCell>{item.time}</TableCell>
                   <TableCell>{item.attendedBy}</TableCell>
                   <TableCell>{item.company}</TableCell>
                   <TableCell>{item.query}</TableCell>
@@ -403,7 +451,7 @@ const Dashboard = ({ isLoggedIn }) => {
                     <Box
                       sx={{
                         display: "flex",
-                        gap: "1vw", // Adjust the gap as needed
+                        gap: "1vw",
                       }}
                     >
                       <Button

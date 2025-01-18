@@ -12,6 +12,8 @@ import {
 const CreateForm = ({ item, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
     name: "",
+    date: "",
+    time: "",
     number: "",
     timestamp: "",
     attendedBy: "",
@@ -19,8 +21,6 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
     query: "",
     status: "",
   });
-  const specialCharRegex = /[^a-zA-Z0\s]/;
-
   useEffect(() => {
     if (item) {
       setFormData({
@@ -111,7 +111,30 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
             fullWidth
             margin="normal"
           />
-
+          <TextField
+            label="Date"
+            name="date"
+            type="date"
+            value={formData.date}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+          <TextField
+            label="Time"
+            name="time"
+            type="time"
+            value={formData.time}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
           <TextField
             label="Company"
             name="company"
@@ -145,7 +168,7 @@ const CreateForm = ({ item, onClose, onSubmit }) => {
             onClick={handleSubmit}
             color="primary"
             variant="contained"
-            disabled={!!errors.number || !!errors.date}
+            disabled={!!errors.number}
           >
             Save
           </Button>
